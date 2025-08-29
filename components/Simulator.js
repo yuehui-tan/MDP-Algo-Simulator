@@ -31,7 +31,7 @@ const transformCoord = (x, y) => {
 };
 
 // size of each table cell (px) – adjust if needed
-const cellSize = 25;
+const cellSize = 20;
 const offset = cellSize / 2;
 
 const gridToPixel = (x, y) => {
