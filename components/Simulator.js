@@ -2,7 +2,6 @@ import React from "react";
 import { useState, useEffect } from "react";
 import QueryAPI from "./QueryAPI";
 
-
 const Direction = {
   NORTH: 0,
   EAST: 2,
@@ -271,126 +270,136 @@ export default function Simulator() {
   };
 
   const renderGrid = () => {
-    // Initialize the empty rows array
-    const rows = [];
+  // Initialize the empty rows array
+  const rows = [];
 
-    const baseStyle = {
-      width: 25,
-      height: 25,
-      borderStyle: "solid",
-      borderTopWidth: 1,
-      borderBottomWidth: 1,
-      borderLeftWidth: 1,
-      borderRightWidth: 1,
-      padding: 0,
-    };
+  const baseStyle = {
+    width: 25,
+    height: 25,
+    borderStyle: "solid",
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderLeftWidth: 1,
+    borderRightWidth: 1,
+    padding: 0,
+  };
 
-    // Generate robot cells
-    const robotCells = generateRobotCells();
+  // Generate robot cells
+  const robotCells = generateRobotCells();
 
-    // Generate the grid
-    for (let i = 0; i < 20; i++) {
-      const cells = [
-        // Header cells
-        <td key={i} className="w-5 h-5 md:w-8 md:h-8">
-          <span className="text-sky-900 font-bold text-[0.6rem] md:text-base ">
-            {19 - i}
-          </span>
-        </td>,
-      ];
+  // Generate the grid
+  for (let i = 0; i < 20; i++) {
+    const cells = [
+      // Header cells
+      <td key={i} className="w-5 h-5 md:w-8 md:h-8">
+        <span className="text-sky-900 font-bold text-[0.6rem] md:text-base ">
+          {19 - i}
+        </span>
+      </td>,
+    ];
 
-      for (let j = 0; j < 20; j++) {
-        let foundOb = null;
-        let foundRobotCell = null;
+    for (let j = 0; j < 20; j++) {
+      let foundOb = null;
+      let foundRobotCell = null;
 
-        for (const ob of obstacles) {
-          const transformed = transformCoord(ob.x, ob.y);
-          if (transformed.x === i && transformed.y === j) {
-            foundOb = ob;
-            break;
-          }
-        }
-
-        if (!foundOb) {
-          for (const cell of robotCells) {
-            if (cell.x === i && cell.y === j) {
-              foundRobotCell = cell;
-              break;
-            }
-          }
-        }
-
-        let foundTrail = trail.find(
-        (t) => transformCoord(t.x, t.y).x === i && transformCoord(t.x, t.y).y === j
-        );
-
-        if (foundTrail) {
-          cells.push(
-            <td className="bg-yellow-300 border w-5 h-5 md:w-8 md:h-8" />
-          );
-          continue;
-        }
-
-        if (foundOb) {
-          if (foundOb.d === Direction.WEST) {
-            cells.push(
-              <td className="border border-l-4 border-l-red-500 w-5 h-5 md:w-8 md:h-8 bg-black" />
-              
-            );
-          } else if (foundOb.d === Direction.EAST) {
-            cells.push(
-              <td className="border border-r-4 border-r-red-500 w-5 h-5 md:w-8 md:h-8 bg-black" />
-            );
-          } else if (foundOb.d === Direction.NORTH) {
-            cells.push(
-              <td className="border border-t-4 border-t-red-500 w-5 h-5 md:w-8 md:h-8 bg-black" />
-            );
-          } else if (foundOb.d === Direction.SOUTH) {
-            cells.push(
-              <td className="border border-b-4 border-b-red-500 w-5 h-5 md:w-8 md:h-8 bg-black" />
-            );
-          } else if (foundOb.d === Direction.SKIP) {
-            cells.push(
-              <td className="border w-5 h-5 md:w-8 md:h-8 bg-black" />
-            );
-          }
-        } else if (foundRobotCell) {
-          if (foundRobotCell.d !== null) {
-            cells.push(
-              <td
-                className={`border w-5 h-5 md:w-8 md:h-8 ${
-                  foundRobotCell.s != -1 ? "bg-rose-500" : "bg-cyan-400"
-                }`}
-              />
-            );
-          } else {
-            cells.push(
-              <td className="bg-green-600 border-white border w-5 h-5 md:w-8 md:h-8" />
-            );
-          }
-        } else {
-          cells.push(
-            <td className="border-black border w-5 h-5 md:w-8 md:h-8" />
-          );
+      // check obstacles
+      for (const ob of obstacles) {
+        const transformed = transformCoord(ob.x, ob.y);
+        if (transformed.x === i && transformed.y === j) {
+          foundOb = ob;
+          break;
         }
       }
 
-      rows.push(<tr key={19 - i}>{cells}</tr>);
+      // check robot
+      if (!foundOb) {
+        for (const cell of robotCells) {
+          if (cell.x === i && cell.y === j) {
+            foundRobotCell = cell;
+            break;
+          }
+        }
+      }
+
+      // check trail
+      let foundTrail = trail.find(
+        (t) =>
+          transformCoord(t.x, t.y).x === i &&
+          transformCoord(t.x, t.y).y === j
+      );
+
+      // --- PRIORITY ORDER ---
+      // 1. Robot (always on top of trail)
+      if (foundRobotCell) {
+        if (foundRobotCell.d !== null) {
+          cells.push(
+            <td
+              className={`border w-5 h-5 md:w-8 md:h-8 ${
+                foundRobotCell.s != -1 ? "bg-rose-500" : "bg-cyan-400"
+              }`}
+            />
+          );
+        } else {
+          cells.push(
+            <td className="bg-green-600 border-white border w-5 h-5 md:w-8 md:h-8" />
+          );
+        }
+      }
+      // 2. Obstacle
+      else if (foundOb) {
+        if (foundOb.d === Direction.WEST) {
+          cells.push(
+            <td className="border border-l-4 border-l-red-500 w-5 h-5 md:w-8 md:h-8 bg-black" />
+          );
+        } else if (foundOb.d === Direction.EAST) {
+          cells.push(
+            <td className="border border-r-4 border-r-red-500 w-5 h-5 md:w-8 md:h-8 bg-black" />
+          );
+        } else if (foundOb.d === Direction.NORTH) {
+          cells.push(
+            <td className="border border-t-4 border-t-red-500 w-5 h-5 md:w-8 md:h-8 bg-black" />
+          );
+        } else if (foundOb.d === Direction.SOUTH) {
+          cells.push(
+            <td className="border border-b-4 border-b-red-500 w-5 h-5 md:w-8 md:h-8 bg-black" />
+          );
+        } else if (foundOb.d === Direction.SKIP) {
+          cells.push(
+            <td className="border w-5 h-5 md:w-8 md:h-8 bg-black" />
+          );
+        }
+      }
+      // 3. Trail
+      else if (foundTrail) {
+        cells.push(
+          <td className="bg-yellow-300 border w-5 h-5 md:w-8 md:h-8" />
+        );
+      }
+      // 4. Empty cell
+      else {
+        cells.push(
+          <td className="border-black border w-5 h-5 md:w-8 md:h-8" />
+        );
+      }
     }
 
-    const yAxis = [<td key={0} />];
-    for (let i = 0; i < 20; i++) {
-      yAxis.push(
-        <td className="w-5 h-5 md:w-8 md:h-8">
-          <span className="text-sky-900 font-bold text-[0.6rem] md:text-base ">
-            {i}
-          </span>
-        </td>
-      );
-    }
-    rows.push(<tr key={20}>{yAxis}</tr>);
-    return rows;
-  };
+    rows.push(<tr key={19 - i}>{cells}</tr>);
+  }
+
+  const yAxis = [<td key={0} />];
+  for (let i = 0; i < 20; i++) {
+    yAxis.push(
+      <td className="w-5 h-5 md:w-8 md:h-8">
+        <span className="text-sky-900 font-bold text-[0.6rem] md:text-base ">
+          {i}
+        </span>
+      </td>
+    );
+  }
+  rows.push(<tr key={20}>{yAxis}</tr>);
+  return rows;
+};
+
 
   // useEffect(() => {
   //   if (page >= path.length) return;
@@ -403,42 +412,53 @@ useEffect(() => {
   const current = path[page];
   const prev = page > 0 ? path[page - 1] : current;
 
+  // update robot position
   setRobotState(current);
 
   let newTrail = [];
 
-  const dx = current.x - prev.x;
-  const dy = current.y - prev.y;
+  // Rebuild trail from start up to current step
+  for (let i = 1; i <= page; i++) {
+    const from = path[i - 1];
+    const to = path[i];
 
-  // if moved in X direction
-  if (dy === 0 && dx !== 0) {
-    const step = dx > 0 ? 1 : -1;
-    for (let x = prev.x; x !== current.x + step; x += step) {
-      newTrail.push({ x, y: current.y });
+    // use path directly (already center)
+    const centerFrom = { x: from.x, y: from.y };
+    const centerTo   = { x: to.x,   y: to.y };
+
+    const dx = centerTo.x - centerFrom.x;
+    const dy = centerTo.y - centerFrom.y;
+
+    // horizontal move
+    if (dy === 0 && dx !== 0) {
+      const step = dx > 0 ? 1 : -1;
+      for (let x = centerFrom.x; x !== centerTo.x + step; x += step) {
+        newTrail.push({ x, y: centerFrom.y });
+      }
     }
-  }
-  // if moved in Y direction
-  else if (dx === 0 && dy !== 0) {
-    const step = dy > 0 ? 1 : -1;
-    for (let y = prev.y; y !== current.y + step; y += step) {
-      newTrail.push({ x: current.x, y });
+    // vertical move
+    else if (dx === 0 && dy !== 0) {
+      const step = dy > 0 ? 1 : -1;
+      for (let y = centerFrom.y; y !== centerTo.y + step; y += step) {
+        newTrail.push({ x: centerFrom.x, y });
+      }
     }
-  }
-  // if moved diagonally (turn)
-  else if (dx !== 0 && dy !== 0) {
-    const stepX = dx > 0 ? 1 : -1;
-    const stepY = dy > 0 ? 1 : -1;
-    let x = prev.x;
-    let y = prev.y;
-    while (x !== current.x || y !== current.y) {
-      if (x !== current.x) x += stepX;
-      if (y !== current.y) y += stepY;
-      newTrail.push({ x, y });
+    // turn (L-shape)
+    else if (dx !== 0 && dy !== 0) {
+      const stepX = dx > 0 ? 1 : -1;
+      for (let x = centerFrom.x; x !== centerTo.x + stepX; x += stepX) {
+        newTrail.push({ x, y: centerFrom.y });
+      }
+      const stepY = dy > 0 ? 1 : -1;
+      for (let y = centerFrom.y; y !== centerTo.y + stepY; y += stepY) {
+        newTrail.push({ x: centerTo.x, y });
+      }
     }
   }
 
-  setTrail((prevTrail) => [...prevTrail, ...newTrail]);
+  setTrail(newTrail);
 }, [page, path]);
+
 
 
 
@@ -658,3 +678,4 @@ useEffect(() => {
 );
 
 }
+
