@@ -262,5 +262,43 @@ def command_generator(states, obstacles):
         
         # Otherwise, just add as usual
         compressed_commands.append(commands[i])
+    time = time_generator(compressed_commands)
+    return compressed_commands,time
 
-    return compressed_commands
+def time_generator(compressed_commands: list):
+    """
+    This function takes in a list of commands and generates the time taken
+
+    Inputs
+    ------
+    compressed_commands: list of commands 
+
+    Returns
+    -------
+    time: list of time taken for each command
+    """
+    time = []
+    
+    # Iterate through each command in the list of compressed commands
+    for command in compressed_commands:
+        # Check if the command starts with 'FW' (forward movement) or 'BW' (backward movement)
+        if command.startswith("FW") or command.startswith("BW"):
+            # Extract the number of steps from the command string
+            steps = int(command[2:])
+            # Calculate time for movement: 3 seconds per step
+            time.append(steps / 10 * 3)
+        # Check if the command is a turning command (FR, FL, BR, BL)
+        elif command.startswith("FR") or command.startswith("FL") or command.startswith("BR") or command.startswith("BL"):
+            # A turn takes 8 seconds, 
+            time.append(8)
+        # Handle 'SNAP' command for taking a picture
+        elif command.startswith("SNAP"):
+            # (We assume) taking a picture takes 0 second (but we filter this out later anyway, if not we can just add x seconds to the latest step)
+            #time[:-1] += 1
+            time.append(0)
+        # Handle 'FIN' command to stop
+        elif command.startswith("FIN"):
+            # Final Commands just to end simulation should take 0 seconds
+            time.append(0)
+    
+    return time

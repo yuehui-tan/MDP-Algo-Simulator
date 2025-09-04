@@ -54,10 +54,10 @@ export default function Simulator() {
   const [isComputing, setIsComputing] = useState(false);
   const [path, setPath] = useState([]);
   const [commands, setCommands] = useState([]);
+  const [commandTimes, setCommandTimes] = useState([]);
   const [page, setPage] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
   const [startTime, setStartTime] = useState(null);
-  const [elapsed, setElapsed] = useState(0);
   const [trail, setTrail] = useState([]);
 
 
@@ -190,7 +190,6 @@ export default function Simulator() {
 
   const onClickRobot = () => {
     // Set the robot state to the input
-
     setRobotState({ x: robotX, y: robotY, d: robotDir, s: -1 });
   };
 
@@ -226,16 +225,17 @@ export default function Simulator() {
       if (data) {
         // If the data is valid, set the path
         setPath(data.data.path);
-        // Set the commands
+        // Set the commands and times, filtering out SNAP commands
         const commands = [];
-        for (let x of data.data.commands) {
-          // If the command is a snapshot, skip it
-          if (x.startsWith("SNAP")) {
-            continue;
+        const times = [];
+        for (let i = 0; i < data.data.commands.length; i++) {
+          if (!data.data.commands[i].startsWith("SNAP")) {
+            commands.push(data.data.commands[i]);
+            times.push(data.data.time[i]);
           }
-          commands.push(x);
         }
         setCommands(commands);
+        setCommandTimes(times);
       }
       // Set computing to false, release the lock
       setIsComputing(false);
@@ -250,11 +250,11 @@ export default function Simulator() {
     setRobotState({ x: 1, y: 1, d: Direction.NORTH, s: -1 });
     setPath([]);
     setCommands([]);
+    setCommandTimes([]);
     setPage(0);
     setObstacles([]);
     setIsRunning(false);
     setStartTime(null);
-    setElapsed(0);
     setTrail([]);
   };
 
@@ -266,145 +266,140 @@ export default function Simulator() {
     setRobotState({ x: 1, y: 1, d: Direction.NORTH, s: -1 });
     setPath([]);
     setCommands([]);
+    setCommandTimes([]);
     setPage(0);
   };
 
   const renderGrid = () => {
-  // Initialize the empty rows array
-  const rows = [];
+    // Initialize the empty rows array
+    const rows = [];
 
-  const baseStyle = {
-    width: 25,
-    height: 25,
-    borderStyle: "solid",
-    borderTopWidth: 1,
-    borderBottomWidth: 1,
-    borderLeftWidth: 1,
-    borderRightWidth: 1,
-    padding: 0,
-  };
+    const baseStyle = {
+      width: 25,
+      height: 25,
+      borderStyle: "solid",
+      borderTopWidth: 1,
+      borderBottomWidth: 1,
+      borderLeftWidth: 1,
+      borderRightWidth: 1,
+      padding: 0,
+    };
 
-  // Generate robot cells
-  const robotCells = generateRobotCells();
+    // Generate robot cells
+    const robotCells = generateRobotCells();
 
-  // Generate the grid
-  for (let i = 0; i < 20; i++) {
-    const cells = [
-      // Header cells
-      <td key={i} className="w-5 h-5 md:w-8 md:h-8">
-        <span className="text-sky-900 font-bold text-[0.6rem] md:text-base ">
-          {19 - i}
-        </span>
-      </td>,
-    ];
+    // Generate the grid
+    for (let i = 0; i < 20; i++) {
+      const cells = [
+        // Header cells
+        <td key={i} className="w-5 h-5 md:w-8 md:h-8">
+          <span className="text-sky-900 font-bold text-[0.6rem] md:text-base ">
+            {19 - i}
+          </span>
+        </td>,
+      ];
 
-    for (let j = 0; j < 20; j++) {
-      let foundOb = null;
-      let foundRobotCell = null;
+      for (let j = 0; j < 20; j++) {
+        let foundOb = null;
+        let foundRobotCell = null;
 
-      // check obstacles
-      for (const ob of obstacles) {
-        const transformed = transformCoord(ob.x, ob.y);
-        if (transformed.x === i && transformed.y === j) {
-          foundOb = ob;
-          break;
-        }
-      }
-
-      // check robot
-      if (!foundOb) {
-        for (const cell of robotCells) {
-          if (cell.x === i && cell.y === j) {
-            foundRobotCell = cell;
+        // check obstacles
+        for (const ob of obstacles) {
+          const transformed = transformCoord(ob.x, ob.y);
+          if (transformed.x === i && transformed.y === j) {
+            foundOb = ob;
             break;
           }
         }
-      }
 
-      // check trail
-      let foundTrail = trail.find(
-        (t) =>
-          transformCoord(t.x, t.y).x === i &&
-          transformCoord(t.x, t.y).y === j
-      );
+        // check robot
+        if (!foundOb) {
+          for (const cell of robotCells) {
+            if (cell.x === i && cell.y === j) {
+              foundRobotCell = cell;
+              break;
+            }
+          }
+        }
 
-      // --- PRIORITY ORDER ---
-      // 1. Robot (always on top of trail)
-      if (foundRobotCell) {
-        if (foundRobotCell.d !== null) {
+        // check trail
+        let foundTrail = trail.find(
+          (t) =>
+            transformCoord(t.x, t.y).x === i &&
+            transformCoord(t.x, t.y).y === j
+        );
+
+        // --- PRIORITY ORDER ---
+        // 1. Robot (always on top of trail)
+        if (foundRobotCell) {
+          if (foundRobotCell.d !== null) {
+            cells.push(
+              <td
+                className={`border w-5 h-5 md:w-8 md:h-8 ${
+                  foundRobotCell.s != -1 ? "bg-rose-500" : "bg-cyan-400"
+                }`}
+              />
+            );
+          } else {
+            cells.push(
+              <td className="bg-green-600 border-white border w-5 h-5 md:w-8 md:h-8" />
+            );
+          }
+        }
+        // 2. Obstacle
+        else if (foundOb) {
+          if (foundOb.d === Direction.WEST) {
+            cells.push(
+              <td className="border border-l-4 border-l-red-500 w-5 h-5 md:w-8 md:h-8 bg-black" />
+            );
+          } else if (foundOb.d === Direction.EAST) {
+            cells.push(
+              <td className="border border-r-4 border-r-red-500 w-5 h-5 md:w-8 md:h-8 bg-black" />
+            );
+          } else if (foundOb.d === Direction.NORTH) {
+            cells.push(
+              <td className="border border-t-4 border-t-red-500 w-5 h-5 md:w-8 md:h-8 bg-black" />
+            );
+          } else if (foundOb.d === Direction.SOUTH) {
+            cells.push(
+              <td className="border border-b-4 border-b-red-500 w-5 h-5 md:w-8 md:h-8 bg-black" />
+            );
+          } else if (foundOb.d === Direction.SKIP) {
+            cells.push(
+              <td className="border w-5 h-5 md:w-8 md:h-8 bg-black" />
+            );
+          }
+        }
+        // 3. Trail
+        else if (foundTrail) {
           cells.push(
-            <td
-              className={`border w-5 h-5 md:w-8 md:h-8 ${
-                foundRobotCell.s != -1 ? "bg-rose-500" : "bg-cyan-400"
-              }`}
-            />
+            <td className="bg-yellow-300 border w-5 h-5 md:w-8 md:h-8" />
           );
-        } else {
+        }
+        // 4. Empty cell
+        else {
           cells.push(
-            <td className="bg-green-600 border-white border w-5 h-5 md:w-8 md:h-8" />
+            <td className="border-black border w-5 h-5 md:w-8 md:h-8" />
           );
         }
       }
-      // 2. Obstacle
-      else if (foundOb) {
-        if (foundOb.d === Direction.WEST) {
-          cells.push(
-            <td className="border border-l-4 border-l-red-500 w-5 h-5 md:w-8 md:h-8 bg-black" />
-          );
-        } else if (foundOb.d === Direction.EAST) {
-          cells.push(
-            <td className="border border-r-4 border-r-red-500 w-5 h-5 md:w-8 md:h-8 bg-black" />
-          );
-        } else if (foundOb.d === Direction.NORTH) {
-          cells.push(
-            <td className="border border-t-4 border-t-red-500 w-5 h-5 md:w-8 md:h-8 bg-black" />
-          );
-        } else if (foundOb.d === Direction.SOUTH) {
-          cells.push(
-            <td className="border border-b-4 border-b-red-500 w-5 h-5 md:w-8 md:h-8 bg-black" />
-          );
-        } else if (foundOb.d === Direction.SKIP) {
-          cells.push(
-            <td className="border w-5 h-5 md:w-8 md:h-8 bg-black" />
-          );
-        }
-      }
-      // 3. Trail
-      else if (foundTrail) {
-        cells.push(
-          <td className="bg-yellow-300 border w-5 h-5 md:w-8 md:h-8" />
-        );
-      }
-      // 4. Empty cell
-      else {
-        cells.push(
-          <td className="border-black border w-5 h-5 md:w-8 md:h-8" />
-        );
-      }
+
+      rows.push(<tr key={19 - i}>{cells}</tr>);
     }
 
-    rows.push(<tr key={19 - i}>{cells}</tr>);
-  }
-
-  const yAxis = [<td key={0} />];
-  for (let i = 0; i < 20; i++) {
-    yAxis.push(
-      <td className="w-5 h-5 md:w-8 md:h-8">
-        <span className="text-sky-900 font-bold text-[0.6rem] md:text-base ">
-          {i}
-        </span>
-      </td>
-    );
-  }
-  rows.push(<tr key={20}>{yAxis}</tr>);
-  return rows;
-};
-
-
-  // useEffect(() => {
-  //   if (page >= path.length) return;
-  //   setRobotState(path[page]);
-  // }, [page, path]);
+    const yAxis = [<td key={0} />];
+    for (let i = 0; i < 20; i++) {
+      yAxis.push(
+        <td className="w-5 h-5 md:w-8 md:h-8">
+          <span className="text-sky-900 font-bold text-[0.6rem] md:text-base ">
+            {i}
+          </span>
+        </td>
+      );
+    }
+    rows.push(<tr key={20}>{yAxis}</tr>);
+    return rows;
+  };
 
 useEffect(() => {
   if (page >= path.length) return;
@@ -424,43 +419,40 @@ useEffect(() => {
 
     // use path directly (already center)
     const centerFrom = { x: from.x, y: from.y };
-    const centerTo   = { x: to.x,   y: to.y };
+    const centerTo = { x: to.x, y: to.y };
 
     const dx = centerTo.x - centerFrom.x;
     const dy = centerTo.y - centerFrom.y;
 
-    // horizontal move
-    if (dy === 0 && dx !== 0) {
-      const step = dx > 0 ? 1 : -1;
-      for (let x = centerFrom.x; x !== centerTo.x + step; x += step) {
-        newTrail.push({ x, y: centerFrom.y });
+      // horizontal move
+      if (dy === 0 && dx !== 0) {
+        const step = dx > 0 ? 1 : -1;
+        for (let x = centerFrom.x; x !== centerTo.x + step; x += step) {
+          newTrail.push({ x, y: centerFrom.y });
+        }
+      }
+      // vertical move
+      else if (dx === 0 && dy !== 0) {
+        const step = dy > 0 ? 1 : -1;
+        for (let y = centerFrom.y; y !== centerTo.y + step; y += step) {
+          newTrail.push({ x: centerFrom.x, y });
+        }
+      }
+      // turn (L-shape)
+      else if (dx !== 0 && dy !== 0) {
+        const stepX = dx > 0 ? 1 : -1;
+        for (let x = centerFrom.x; x !== centerTo.x + stepX; x += stepX) {
+          newTrail.push({ x, y: centerFrom.y });
+        }
+        const stepY = dy > 0 ? 1 : -1;
+        for (let y = centerFrom.y; y !== centerTo.y + stepY; y += stepY) {
+          newTrail.push({ x: centerTo.x, y });
+        }
       }
     }
-    // vertical move
-    else if (dx === 0 && dy !== 0) {
-      const step = dy > 0 ? 1 : -1;
-      for (let y = centerFrom.y; y !== centerTo.y + step; y += step) {
-        newTrail.push({ x: centerFrom.x, y });
-      }
-    }
-    // turn (L-shape)
-    else if (dx !== 0 && dy !== 0) {
-      const stepX = dx > 0 ? 1 : -1;
-      for (let x = centerFrom.x; x !== centerTo.x + stepX; x += stepX) {
-        newTrail.push({ x, y: centerFrom.y });
-      }
-      const stepY = dy > 0 ? 1 : -1;
-      for (let y = centerFrom.y; y !== centerTo.y + stepY; y += stepY) {
-        newTrail.push({ x: centerTo.x, y });
-      }
-    }
-  }
 
-  setTrail(newTrail);
-}, [page, path]);
-
-
-
+    setTrail(newTrail);
+  }, [page, path]);
 
   useEffect(() => {
     let interval;
@@ -470,212 +462,208 @@ useEffect(() => {
       }, 500); // adjust ms per step
     } else if (isRunning && page === path.length - 1) {
       setIsRunning(false);
-      setElapsed((Date.now() - startTime) / 1000); // seconds elapsed
     }
     return () => clearInterval(interval);
   }, [isRunning, page, path, startTime]);
 
 
+  // Function to calculate cumulative time up to a given step
+  const getCumulativeTime = (stepIndex) => {
+    // Return 0 for the first step
+    if (stepIndex <= 0) {
+        return 0;
+    }
+    let totalTime = 0;
+    // Sum times for all previous commands
+    for (let i = 0; i < stepIndex && i < commandTimes.length; i++) {
+      totalTime += commandTimes[i];
+    }
+    return totalTime;
+  };
+
+
   return (
-  <div className="flex flex-row h-screen bg-gray-100 text-gray-900">
-    {/* LEFT SETTINGS PANEL */}
-    <div className="w-1/3 p-6 flex flex-col space-y-6 bg-white shadow-xl overflow-y-auto">
-      <h2 className="text-2xl font-bold text-teal-600 mb-4">
-        MDP Group 9 Algo Simulator
-      </h2>
+    <div className="flex flex-row h-screen bg-gray-100 text-gray-900">
+      {/* LEFT SETTINGS PANEL */}
+      <div className="w-1/3 p-6 flex flex-col space-y-6 bg-white shadow-xl overflow-y-auto">
+        <h2 className="text-2xl font-bold text-teal-600 mb-4">
+          MDP Group 9 Algo Simulator
+        </h2>
 
-      {/* Robot Position */}
-      <div className="p-4 rounded-lg bg-gray-50 shadow">
-        <h3 className="font-semibold mb-2">Robot Position</h3>
-        <div className="form-control">
-          <label className="input-group input-group-horizontal">
-            <span className="bg-gray-200 p-2">X</span>
-            <input
-              onChange={onChangeRobotX}
-              type="number"
-              placeholder="1"
-              min="1"
-              max="18"
-              className="input input-bordered text-blue-900 w-20"
-            />
-            <span className="bg-gray-200 p-2">Y</span>
-            <input
-              onChange={onChangeRobotY}
-              type="number"
-              placeholder="1"
-              min="1"
-              max="18"
-              className="input input-bordered text-blue-900 w-20"
-            />
-            <span className="bg-gray-200 p-2">D</span>
-            <select
-              onChange={onRobotDirectionInputChange}
-              value={robotDir}
-              className="select text-blue-900 py-2 pl-2 pr-6"
-            >
-              <option value={ObDirection.NORTH}>Up</option>
-              <option value={ObDirection.SOUTH}>Down</option>
-              <option value={ObDirection.WEST}>Left</option>
-              <option value={ObDirection.EAST}>Right</option>
-            </select>
-            <button className="btn bg-teal-600 text-white p-2" onClick={onClickRobot}>
-              Set
-            </button>
-          </label>
-        </div>
-      </div>
-
-      {/* Add Obstacles */}
-      <div className="p-4 rounded-lg bg-gray-50 shadow">
-        <h3 className="font-semibold mb-2">Add Obstacles</h3>
-        <div className="form-control">
-          <label className="input-group input-group-horizontal">
-            <span className="bg-gray-200 p-2">X</span>
-            <input
-              onChange={onChangeX}
-              type="number"
-              placeholder="1"
-              min="0"
-              max="19"
-              className="input input-bordered text-blue-900 w-20"
-            />
-            <span className="bg-gray-200 p-2">Y</span>
-            <input
-              onChange={onChangeY}
-              type="number"
-              placeholder="1"
-              min="0"
-              max="19"
-              className="input input-bordered text-blue-900 w-20"
-            />
-            <span className="bg-gray-200 p-2">D</span>
-            <select
-              onChange={onDirectionInputChange}
-              value={directionInput}
-              className="select text-blue-900 py-2 pl-2 pr-6"
-            >
-              <option value={ObDirection.NORTH}>Up</option>
-              <option value={ObDirection.SOUTH}>Down</option>
-              <option value={ObDirection.WEST}>Left</option>
-              <option value={ObDirection.EAST}>Right</option>
-              <option value={ObDirection.SKIP}>None</option>
-            </select>
-            <button className="btn bg-teal-600 text-white p-2" onClick={onClickObstacle}>
-              Add
-            </button>
-          </label>
-        </div>
-      </div>
-
-      {/* Buttons */}
-      {/* <div className="flex space-x-2">
-        <button className="btn bg-red-500 text-white border-none" onClick={onResetAll}>
-          Reset All
-        </button>
-        <button className="btn bg-orange-500 text-white border-none" onClick={onReset}>
-          Reset Robot
-        </button>
-        <button className="btn bg-teal-600 text-white border-none" onClick={compute}>
-          Submit
-        </button>
-      </div> */}
-
-      <div className="flex space-x-2">
-        <button className="btn bg-gray-700 text-white border-none" onClick={onResetAll}>
-          Reset All
-        </button>
-        <button className="btn bg-indigo-600 text-white border-none" onClick={onReset}>
-          Reset Robot
-        </button>
-        <button className="btn bg-violet-600 text-white border-none" onClick={compute}>
-          Submit
-        </button>
-        <button 
-          className="btn bg-green-600 text-white border-none" 
-          onClick={() => {
-            if (path.length > 0) {
-              setIsRunning(true);
-              setStartTime(Date.now());
-              setPage(0);
-            }
-          }}
-        >
-          Start
-        </button>
-    </div>
-
-
-      {/* Obstacles List */}
-      <div className="p-4 rounded-lg bg-gray-50 shadow">
-        <h3 className="font-semibold mb-2">Obstacles</h3>
-        <div className="grid grid-cols-2 gap-2">
-          {obstacles.map((ob) => (
-            <div
-              key={ob.id}
-              className="bg-white border rounded p-2 text-sm flex justify-between items-center"
-            >
-              <div>
-                <div>X: {ob.x}</div>
-                <div>Y: {ob.y}</div>
-                <div>D: {DirectionToString[ob.d]}</div>
-              </div>
-              <button
-                className="text-red-500 font-bold"
-                onClick={() => onRemoveObstacle(ob)}
+        {/* Robot Position */}
+        <div className="p-4 rounded-lg bg-gray-50 shadow">
+          <h3 className="font-semibold mb-2">Robot Position</h3>
+          <div className="form-control">
+            <label className="input-group input-group-horizontal">
+              <span className="bg-gray-200 p-2">X</span>
+              <input
+                onChange={onChangeRobotX}
+                type="number"
+                placeholder="1"
+                min="1"
+                max="18"
+                className="input input-bordered text-blue-900 w-20"
+              />
+              <span className="bg-gray-200 p-2">Y</span>
+              <input
+                onChange={onChangeRobotY}
+                type="number"
+                placeholder="1"
+                min="1"
+                max="18"
+                className="input input-bordered text-blue-900 w-20"
+              />
+              <span className="bg-gray-200 p-2">D</span>
+              <select
+                onChange={onRobotDirectionInputChange}
+                value={robotDir}
+                className="select text-blue-900 py-2 pl-2 pr-6"
               >
-                ✕
+                <option value={ObDirection.NORTH}>Up</option>
+                <option value={ObDirection.SOUTH}>Down</option>
+                <option value={ObDirection.WEST}>Left</option>
+                <option value={ObDirection.EAST}>Right</option>
+              </select>
+              <button className="btn bg-teal-600 text-white p-2" onClick={onClickRobot}>
+                Set
               </button>
-            </div>
-          ))}
+            </label>
+          </div>
+        </div>
+
+        {/* Add Obstacles */}
+        <div className="p-4 rounded-lg bg-gray-50 shadow">
+          <h3 className="font-semibold mb-2">Add Obstacles</h3>
+          <div className="form-control">
+            <label className="input-group input-group-horizontal">
+              <span className="bg-gray-200 p-2">X</span>
+              <input
+                onChange={onChangeX}
+                type="number"
+                placeholder="1"
+                min="0"
+                max="19"
+                className="input input-bordered text-blue-900 w-20"
+              />
+              <span className="bg-gray-200 p-2">Y</span>
+              <input
+                onChange={onChangeY}
+                type="number"
+                placeholder="1"
+                min="0"
+                max="19"
+                className="input input-bordered text-blue-900 w-20"
+              />
+              <span className="bg-gray-200 p-2">D</span>
+              <select
+                onChange={onDirectionInputChange}
+                value={directionInput}
+                className="select text-blue-900 py-2 pl-2 pr-6"
+              >
+                <option value={ObDirection.NORTH}>Up</option>
+                <option value={ObDirection.SOUTH}>Down</option>
+                <option value={ObDirection.WEST}>Left</option>
+                <option value={ObDirection.EAST}>Right</option>
+                <option value={ObDirection.SKIP}>None</option>
+              </select>
+              <button className="btn bg-teal-600 text-white p-2" onClick={onClickObstacle}>
+                Add
+              </button>
+            </label>
+          </div>
+        </div>
+
+        {/* Buttons */}
+        <div className="flex space-x-2">
+          <button className="btn bg-gray-700 text-white border-none" onClick={onResetAll}>
+            Reset All
+          </button>
+          <button className="btn bg-indigo-600 text-white border-none" onClick={onReset}>
+            Reset Robot
+          </button>
+          <button className="btn bg-violet-600 text-white border-none" onClick={compute}>
+            Submit
+          </button>
+          <button
+            className="btn bg-green-600 text-white border-none"
+            onClick={() => {
+              if (path.length > 0) {
+                setIsRunning(true);
+                setStartTime(Date.now());
+                setPage(0);
+              }
+            }}
+          >
+            Start
+          </button>
+        </div>
+
+
+        {/* Obstacles List */}
+        <div className="p-4 rounded-lg bg-gray-50 shadow">
+          <h3 className="font-semibold mb-2">Obstacles</h3>
+          <div className="grid grid-cols-2 gap-2">
+            {obstacles.map((ob) => (
+              <div
+                key={ob.id}
+                className="bg-white border rounded p-2 text-sm flex justify-between items-center"
+              >
+                <div>
+                  <div>X: {ob.x}</div>
+                  <div>Y: {ob.y}</div>
+                  <div>D: {DirectionToString[ob.d]}</div>
+                </div>
+                <button
+                  className="text-red-500 font-bold"
+                  onClick={() => onRemoveObstacle(ob)}
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
+
+      {/* RIGHT GRID PANEL */}
+      <div className="flex-1 flex flex-col items-center justify-center p-6">
+        {/* Step and Command Info */}
+        {path.length > 0 && (
+          <div className="flex flex-row items-center mb-4">
+            <button
+              className="btn btn-circle"
+              disabled={page === 0}
+              onClick={() => setPage(page - 1)}
+            >
+              ◀
+            </button>
+            <span className="mx-4">
+              Step: {page + 1} / {path.length} – {commands[page]}
+              {commands[page] && commandTimes.length > page && ` (Time: ${getCumulativeTime(page)}s)`}
+            </span>
+            <button
+              className="btn btn-circle"
+              disabled={page === path.length - 1}
+              onClick={() => setPage(page + 1)}
+            >
+              ▶
+            </button>
+          </div>
+        )}
+
+        {/* Timer Display */}
+        {isRunning && (
+          <div className="mb-2 text-lg font-semibold text-gray-700">
+            Running...
+          </div>
+        )}
+
+
+        {/* Grid */}
+        <table className="border-collapse">
+          <tbody>{renderGrid()}</tbody>
+        </table>
+      </div>
     </div>
-
-    {/* RIGHT GRID PANEL */}
-    <div className="flex-1 flex flex-col items-center justify-center p-6">
-      {/* Step and Command Info */}
-      {path.length > 0 && (
-        <div className="flex flex-row items-center mb-4">
-          <button
-            className="btn btn-circle"
-            disabled={page === 0}
-            onClick={() => setPage(page - 1)}
-          >
-            ◀
-          </button>
-          <span className="mx-4">
-            Step: {page + 1} / {path.length} – {commands[page]}
-          </span>
-          <button
-            className="btn btn-circle"
-            disabled={page === path.length - 1}
-            onClick={() => setPage(page + 1)}
-          >
-            ▶
-          </button>
-        </div>
-      )}
-
-      {/* Timer Display */}
-      {isRunning && (
-        <div className="mb-2 text-lg font-semibold text-gray-700">
-          Running...
-        </div>
-      )}
-      {!isRunning && elapsed > 0 && (
-        <div className="mb-2 text-lg font-semibold text-gray-700">
-          Finished in {elapsed.toFixed(2)} seconds
-        </div>
-      )}
-
-
-      {/* Grid */}
-      <table className="border-collapse">
-        <tbody>{renderGrid()}</tbody>
-      </table>
-    </div>
-  </div>
-);
-
+  );
 }
-

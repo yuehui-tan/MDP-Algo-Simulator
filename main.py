@@ -49,7 +49,7 @@ def path_finding():
     print(f"Distance to travel: {distance} units")
     
     # Based on the shortest path, generate commands for the robot
-    commands = command_generator(optimal_path, obstacles)
+    commands,time_list = command_generator(optimal_path, obstacles)
 
     # Get the starting location and add it to path_results
     path_results = [optimal_path[0].get_dict()]
@@ -71,7 +71,8 @@ def path_finding():
         "data": {
             'distance': distance,
             'path': path_results,
-            'commands': commands
+            'commands': commands,
+            'time': time_list
         },
         "error": None
     })
