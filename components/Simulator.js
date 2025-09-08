@@ -60,7 +60,6 @@ export default function Simulator() {
   const [startTime, setStartTime] = useState(null);
   const [trail, setTrail] = useState([]);
 
-
   const generateNewID = () => {
     while (true) {
       let new_id = Math.floor(Math.random() * 10) + 1; // just try to generate an id;
