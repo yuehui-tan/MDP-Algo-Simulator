@@ -60,6 +60,39 @@ export default function Simulator() {
   const [startTime, setStartTime] = useState(null);
   const [trail, setTrail] = useState([]);
 
+  const [savedTrails, setSavedTrails] = useState([]);
+  const [trailName, setTrailName] = useState("");
+  const [activeTrail, setActiveTrail] = useState(null);
+
+
+  // --- Trail Save/Recall Functions ---
+  function saveCurrentTrail(name) {
+    const snapshot = {
+      name: name || `Trail ${savedTrails.length + 1}`,
+      obstacles: obstacles.map((o) => ({ ...o })),
+      trail: trail.map((t) => ({ ...t })),
+      path: path.map((p) => ({ ...p })),
+      commands: commands.slice(),                // commands for display
+      commandTimes: commandTimes.slice(),        // times for step timing
+      robot: { ...robotState }
+    };
+    setSavedTrails([...savedTrails, snapshot]);
+  }
+
+  function recallTrail(snapshot) {
+    setActiveTrail(snapshot);
+    setPath(snapshot.path || []);
+    setCommands(snapshot.commands || []);
+    setCommandTimes(snapshot.commandTimes || []);
+    if (snapshot.robot) setRobotState(snapshot.robot);
+    setPage(0);  // reset to start of run
+}
+
+
+  function showCurrentRun() {
+    setActiveTrail(null);
+  }
+
   const generateNewID = () => {
     while (true) {
       let new_id = Math.floor(Math.random() * 10) + 1; // just try to generate an id;
@@ -255,6 +288,7 @@ export default function Simulator() {
     setIsRunning(false);
     setStartTime(null);
     setTrail([]);
+    setActiveTrail(null);
   };
 
   const onReset = () => {
@@ -272,6 +306,10 @@ export default function Simulator() {
   const renderGrid = () => {
     // Initialize the empty rows array
     const rows = [];
+
+    const obstaclesToRender = activeTrail ? activeTrail.obstacles : obstacles;
+    const trailToRender = activeTrail ? activeTrail.trail : trail;
+
 
     const baseStyle = {
       width: 25,
@@ -303,7 +341,7 @@ export default function Simulator() {
         let foundRobotCell = null;
 
         // check obstacles
-        for (const ob of obstacles) {
+        for (const ob of obstaclesToRender) {
           const transformed = transformCoord(ob.x, ob.y);
           if (transformed.x === i && transformed.y === j) {
             foundOb = ob;
@@ -322,7 +360,7 @@ export default function Simulator() {
         }
 
         // check trail
-        let foundTrail = trail.find(
+        let foundTrail = trailToRender.find(
           (t) =>
             transformCoord(t.x, t.y).x === i &&
             transformCoord(t.x, t.y).y === j
@@ -621,6 +659,50 @@ useEffect(() => {
               </div>
             ))}
           </div>
+        </div>
+
+
+        {/* Saved Trails Section */}
+        <div className="p-4 rounded-lg bg-gray-50 shadow">
+          <h3 className="font-semibold mb-2">Saved Trails</h3>
+          <div className="flex gap-2 mb-2">
+            <input
+              type="text"
+              placeholder="Trail name..."
+              value={trailName}
+              onChange={(e) => setTrailName(e.target.value)}
+              className="input input-bordered text-blue-900 flex-1"
+            />
+            <button
+              className="btn bg-teal-600 text-white"
+              onClick={() => {
+                saveCurrentTrail(trailName);
+                setTrailName("");
+              }}
+            >
+              Save
+            </button>
+          </div>
+          <ul className="space-y-2">
+            {savedTrails.map((t, idx) => (
+              <li key={idx} className="flex justify-between items-center">
+                <button
+                  className="btn btn-sm bg-gray-200 text-gray-800"
+                  onClick={() => recallTrail(t)}
+                >
+                  {t.name}
+                </button>
+              </li>
+            ))}
+          </ul>
+          {activeTrail && (
+            <button
+              className="btn mt-3 bg-green-600 text-white"
+              onClick={showCurrentRun}
+            >
+              Show Current Run
+            </button>
+          )}
         </div>
       </div>
 
