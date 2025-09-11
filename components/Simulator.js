@@ -59,6 +59,10 @@ export default function Simulator() {
   const [isRunning, setIsRunning] = useState(false);
   const [startTime, setStartTime] = useState(null);
   const [trail, setTrail] = useState([]);
+  const [timeLimit, setTimeLimit] = useState(0);
+  const [timeLimitInput, setTimeLimitInput] = useState(0);
+  const [message, setMessage] = useState(null);
+
 
   const [savedTrails, setSavedTrails] = useState([]);
   const [trailName, setTrailName] = useState("");
@@ -289,6 +293,7 @@ export default function Simulator() {
     setStartTime(null);
     setTrail([]);
     setActiveTrail(null);
+    setMessage(null);
   };
 
   const onReset = () => {
@@ -301,6 +306,7 @@ export default function Simulator() {
     setCommands([]);
     setCommandTimes([]);
     setPage(0);
+    setMessage(null);
   };
 
   const renderGrid = () => {
@@ -494,6 +500,12 @@ useEffect(() => {
   useEffect(() => {
     let interval;
     if (isRunning && page < path.length - 1) {
+      const nextStepCumulativeTime = getCumulativeTime(page + 1);
+      if (timeLimit > 0 && nextStepCumulativeTime > timeLimit) {
+       setIsRunning(false);
+       setMessage(`Time limit of ${timeLimit}s will be exceeded. The robot has stopped.`);
+        return;
+      }
       interval = setInterval(() => {
         setPage((prev) => prev + 1);   // auto advance steps
       }, 500); // adjust ms per step
@@ -516,6 +528,18 @@ useEffect(() => {
       totalTime += commandTimes[i];
     }
     return totalTime;
+  };
+
+  // Handler for time limit input
+  const onChangeTimeLimit = (event) => {
+    const value = Number(event.target.value);
+    if (!isNaN(value) && value >= 0) {
+      setTimeLimitInput(value);
+    }
+  };
+
+  const onClickTimeLimit = () => {
+    setTimeLimit(timeLimitInput);
   };
 
 
@@ -610,6 +634,25 @@ useEffect(() => {
           </div>
         </div>
 
+        {/*Time Limit Input */}
+        <div className="p-4 rounded-lg bg-gray-50 shadow">
+          <h3 className="font-semibold mb-2">Time Limit (s)</h3>
+          <div className="form-control">
+            <label className="input-group input-group-horizontal">
+              <input
+                onChange={onChangeTimeLimit}
+                type="number"
+                placeholder="0"
+                min="0"
+                className="input input-bordered text-blue-900 w-full"
+              />
+              <button className="btn bg-teal-600 text-white p-2" onClick={onClickTimeLimit}>
+                Set
+              </button>
+            </label>
+          </div>
+        </div>
+
         {/* Buttons */}
         <div className="flex space-x-2">
           <button className="btn bg-gray-700 text-white border-none" onClick={onResetAll}>
@@ -628,6 +671,7 @@ useEffect(() => {
                 setIsRunning(true);
                 setStartTime(Date.now());
                 setPage(0);
+                setMessage(null);
               }
             }}
           >
@@ -736,6 +780,12 @@ useEffect(() => {
         {isRunning && (
           <div className="mb-2 text-lg font-semibold text-gray-700">
             Running...
+          </div>
+        )}
+        {/* Message Display */}
+         {message && (
+          <div className="mb-4 text-center text-red-500 font-bold">
+            {message}
           </div>
         )}
 
