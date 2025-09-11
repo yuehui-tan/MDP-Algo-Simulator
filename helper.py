@@ -263,23 +263,7 @@ def command_generator(states, obstacles):
         # Otherwise, just add as usual
         compressed_commands.append(commands[i])
     time = time_generator(compressed_commands)
-    distance = sum(int(cmd[2:]) for cmd in compressed_commands if cmd.startswith(("FW", "BW")))
-
-    # #Build JSON-like object
-    # output = {
-    #     "data": {
-    #         "distance": float(distance),
-    #         "path": [s.get_dict() for s in states],   # ensure State has .to_dict()
-    #         "commands": compressed_commands,
-    #         "time": time
-    #     },
-    #     "error": None
-    # }
-
-    # #Print to terminal
-    # import json
-    # print(json.dumps(output, indent=2))
-    # return compressed_commands,time
+    return compressed_commands,time
 
 def time_generator(compressed_commands: list):
     """
