@@ -90,6 +90,7 @@ export default function Simulator() {
     setCommandTimes(snapshot.commandTimes || []);
     if (snapshot.robot) setRobotState(snapshot.robot);
     setPage(0);  // reset to start of run
+    setTrail([]);
 }
 
 
@@ -314,7 +315,7 @@ export default function Simulator() {
     const rows = [];
 
     const obstaclesToRender = activeTrail ? activeTrail.obstacles : obstacles;
-    const trailToRender = activeTrail ? activeTrail.trail : trail;
+    const trailToRender = trail;
 
 
     const baseStyle = {
@@ -540,6 +541,7 @@ useEffect(() => {
 
   const onClickTimeLimit = () => {
     setTimeLimit(timeLimitInput);
+    setMessage(`Time limit set to ${timeLimitInput}s.`);
   };
 
 
