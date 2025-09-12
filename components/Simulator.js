@@ -741,14 +741,14 @@ useEffect(() => {
               </li>
             ))}
           </ul>
-          {activeTrail && (
+          {/* {activeTrail && (
             <button
               className="btn mt-3 bg-green-600 text-white"
               onClick={showCurrentRun}
             >
               Show Current Run
             </button>
-          )}
+          )} */}
         </div>
       </div>
 
