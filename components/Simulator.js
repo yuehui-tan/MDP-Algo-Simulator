@@ -4,9 +4,13 @@ import QueryAPI from "./QueryAPI";
 
 const Direction = {
   NORTH: 0,
+  NORTHEAST: 1,
   EAST: 2,
+  SOUTHEAST: 3,
   SOUTH: 4,
+  SOUTHWEST: 5,
   WEST: 6,
+  NORTHWEST: 7,
   SKIP: 8,
 };
 
@@ -20,9 +24,13 @@ const ObDirection = {
 
 const DirectionToString = {
   0: "Up",
+  1: "Up-Right",
   2: "Right",
+  3: "Down-Right",
   4: "Down",
+  5: "Down-Left",
   6: "Left",
+  7: "Up-Left",
   8: "None",
 };
 
@@ -119,15 +127,28 @@ export default function Simulator() {
     let markerX = 0;
     let markerY = 0;
 
-    if (Number(robotState.d) === Direction.NORTH) {
+    if (robotState.d === Direction.NORTH) {
       markerY++;
-    } else if (Number(robotState.d) === Direction.EAST) {
+    } else if (robotState.d === Direction.NORTHEAST) {
       markerX++;
-    } else if (Number(robotState.d) === Direction.SOUTH) {
+      markerY++;
+    } else if (robotState.d === Direction.EAST) {
+      markerX++;
+    } else if (robotState.d === Direction.SOUTHEAST) {
+      markerX++;
       markerY--;
-    } else if (Number(robotState.d) === Direction.WEST) {
+    } else if (robotState.d === Direction.SOUTH) {
+      markerY--;
+    } else if (robotState.d === Direction.SOUTHWEST) {
       markerX--;
+      markerY--;
+    } else if (robotState.d === Direction.WEST) {
+      markerX--;
+    } else if (robotState.d === Direction.NORTHWEST) {
+      markerX--;
+      markerY++;
     }
+
 
     // Go from i = -1 to i = 1
     for (let i = -1; i < 2; i++) {
@@ -483,6 +504,19 @@ useEffect(() => {
         }
       }
       // turn (L-shape)
+      // diagonal move (perfect 45°)
+      else if (dx !== 0 && dy !== 0 && Math.abs(dx) === Math.abs(dy)) {
+        const stepX = dx > 0 ? 1 : -1;
+        const stepY = dy > 0 ? 1 : -1;
+        let x = centerFrom.x;
+        let y = centerFrom.y;
+        while (x !== centerTo.x + stepX && y !== centerTo.y + stepY) {
+          newTrail.push({ x, y });
+          x += stepX;
+          y += stepY;
+        }
+      }
+      // fallback for non-45° moves (draw like an L-shape)
       else if (dx !== 0 && dy !== 0) {
         const stepX = dx > 0 ? 1 : -1;
         for (let x = centerFrom.x; x !== centerTo.x + stepX; x += stepX) {
@@ -493,6 +527,17 @@ useEffect(() => {
           newTrail.push({ x: centerTo.x, y });
         }
       }
+      // else if (dx !== 0 && dy !== 0) {
+      //   const stepX = dx > 0 ? 1 : -1;
+      //   for (let x = centerFrom.x; x !== centerTo.x + stepX; x += stepX) {
+      //     newTrail.push({ x, y: centerFrom.y });
+      //   }
+      //   const stepY = dy > 0 ? 1 : -1;
+      //   for (let y = centerFrom.y; y !== centerTo.y + stepY; y += stepY) {
+      //     newTrail.push({ x: centerTo.x, y });
+      //   }
+      // }
+
     }
 
     setTrail(newTrail);
@@ -586,6 +631,10 @@ useEffect(() => {
                 <option value={ObDirection.SOUTH}>Down</option>
                 <option value={ObDirection.WEST}>Left</option>
                 <option value={ObDirection.EAST}>Right</option>
+                <option value={Direction.NORTHEAST}>Up-Right</option>
+                <option value={Direction.SOUTHEAST}>Down-Right</option>
+                <option value={Direction.SOUTHWEST}>Down-Left</option>
+                <option value={Direction.NORTHWEST}>Up-Left</option>
               </select>
               <button className="btn bg-teal-600 text-white p-2" onClick={onClickRobot}>
                 Set

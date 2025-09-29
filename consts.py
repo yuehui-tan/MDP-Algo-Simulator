@@ -3,9 +3,13 @@ from enum import Enum
 
 class Direction(int, Enum):
     NORTH = 0
+    NORTHEAST = 1
     EAST = 2
+    SOUTHEAST = 3
     SOUTH = 4
+    SOUTHWEST = 5
     WEST = 6
+    NORTHWEST = 7
     SKIP = 8
 
     def __int__(self):
@@ -17,10 +21,14 @@ class Direction(int, Enum):
         return min(diff, 8 - diff)
 
 MOVE_DIRECTION = [
-    (1, 0, Direction.EAST),
-    (-1, 0, Direction.WEST),
     (0, 1, Direction.NORTH),
+    (1, 1, Direction.NORTHEAST),
+    (1, 0, Direction.EAST),
+    (1, -1, Direction.SOUTHEAST),
     (0, -1, Direction.SOUTH),
+    (-1, -1, Direction.SOUTHWEST),
+    (-1, 0, Direction.WEST),
+    (-1, 1, Direction.NORTHWEST),
 ]
 
 TURN_FACTOR = 1
