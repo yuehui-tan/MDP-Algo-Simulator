@@ -267,9 +267,10 @@ def is_valid(center_x: int, center_y: int):
 
 def command_generator(states, obstacles):
     """
-    Generate commands (FW, BW, FRxx, FLxx, BRxx, BLxx, SNAP, FIN).
-    Supports 8 directions (45° increments).
+    Generate movement + turn + SNAP commands for the robot.
+    Handles straight, 45° diagonals, and 90° arcs consistently with get_neighbors.
     """
+
     obstacles_dict = {ob['id']: ob for ob in obstacles}
     commands = []
 
@@ -277,79 +278,102 @@ def command_generator(states, obstacles):
         prev = states[i - 1]
         curr = states[i]
 
-        # === Straight (same direction) ===
+        dx = curr.x - prev.x
+        dy = curr.y - prev.y
+        old_dir = int(prev.direction)
+        new_dir = int(curr.direction)
+        diff = (new_dir - old_dir) % 8
+
+        # === Case 1: Straight ===
         if curr.direction == prev.direction:
-            if (curr.x > prev.x and curr.direction in [Direction.EAST, Direction.NORTHEAST, Direction.SOUTHEAST]) \
-               or (curr.x < prev.x and curr.direction in [Direction.WEST, Direction.NORTHWEST, Direction.SOUTHWEST]) \
-               or (curr.y > prev.y and curr.direction in [Direction.NORTH, Direction.NORTHEAST, Direction.NORTHWEST]) \
-               or (curr.y < prev.y and curr.direction in [Direction.SOUTH, Direction.SOUTHEAST, Direction.SOUTHWEST]):
+            if (dx > 0 and curr.direction in [Direction.EAST]) \
+               or (dx < 0 and curr.direction in [Direction.WEST]) \
+               or (dy > 0 and curr.direction in [Direction.NORTH]) \
+               or (dy < 0 and curr.direction in [Direction.SOUTH]):
                 commands.append("FW10")
             else:
                 commands.append("BW10")
 
-        # === Turn (different direction) ===
-        else:
-            old_dir = int(prev.direction)
-            new_dir = int(curr.direction)
-            diff = (new_dir - old_dir) % 8  # clockwise steps in 45°
-
-            if diff == 1:   # 45° right
+        # === Case 2: 45° Diagonal Turns ===
+        elif diff == 1:   # +45° clockwise
+            # forward if movement is in same general quadrant
+            if dx >= 0 or dy >= 0:
                 commands.append("FR45")
-            elif diff == 2: # 90° right
-                if curr.x < prev.x or curr.y < prev.y:
-                    commands.append("BR90")  # went backward
-                else:
-                    commands.append("FR90")  # went forward
-            elif diff == 3: # 135° right
-                commands.extend(["FR90", "FR45"])
-            elif diff == 4: # 180°
-                commands.extend(["FR90", "FR90"])
-            elif diff == 7: # 45° left
-                commands.append("FL45")
-            elif diff == 6: # 90° left
-                if curr.x < prev.x or curr.y < prev.y:
-                    commands.append("BL90")  # backward
-                else:
-                    commands.append("FL90")  # forward
-            elif diff == 5: # 135° left
-                commands.extend(["FL90", "FL45"])
             else:
-                raise Exception("Invalid turning direction")
+                commands.append("BR45")
+        elif diff == 7:  # -45° counter-clockwise
+            if dx <= 0 or dy >= 0:
+                commands.append("FL45")
+            else:
+                commands.append("BL45")
 
-        # === SNAP commands ===
+        # === Case 3: 90° Arcs ===
+        elif diff == 2:  # clockwise (FR90 or BL90)
+            if dx > 0 or dy > 0:
+                commands.append("FR90")
+            else:
+                commands.append("BL90")
+        elif diff == 6:  # counter-clockwise (FL90 or BR90)
+            if dx < 0 or dy > 0:
+                commands.append("FL90")
+            else:
+                commands.append("BR90")
+
+        # === Case 4: 180° Turn ===
+        elif diff == 4:
+            commands.extend(["FR90", "FR90"])
+
+        else:
+            raise Exception(f"Unexpected turn diff: {diff} from {old_dir} -> {new_dir}")
+
+        # === Case 5: SNAP ===
         if curr.screenshot_id != -1:
             ob = obstacles_dict[curr.screenshot_id]
-            rp = curr
+            rob = curr
 
-            if ob['d'] == Direction.WEST and rp.direction == Direction.EAST:
-                commands.append(f"SNAP{curr.screenshot_id}_{'L' if ob['y']>rp.y else 'R' if ob['y']<rp.y else 'C'}")
-            elif ob['d'] == Direction.EAST and rp.direction == Direction.WEST:
-                commands.append(f"SNAP{curr.screenshot_id}_{'R' if ob['y']>rp.y else 'L' if ob['y']<rp.y else 'C'}")
-            elif ob['d'] == Direction.NORTH and rp.direction == Direction.SOUTH:
-                commands.append(f"SNAP{curr.screenshot_id}_{'L' if ob['x']>rp.x else 'R' if ob['x']<rp.x else 'C'}")
-            elif ob['d'] == Direction.SOUTH and rp.direction == Direction.NORTH:
-                commands.append(f"SNAP{curr.screenshot_id}_{'R' if ob['x']>rp.x else 'L' if ob['x']<rp.x else 'C'}")
+            if ob['d'] == Direction.WEST and rob.direction == Direction.EAST:
+                if ob['y'] > rob.y: commands.append(f"SNAP{curr.screenshot_id}_L")
+                elif ob['y'] == rob.y: commands.append(f"SNAP{curr.screenshot_id}_C")
+                else: commands.append(f"SNAP{curr.screenshot_id}_R")
 
+            elif ob['d'] == Direction.EAST and rob.direction == Direction.WEST:
+                if ob['y'] > rob.y: commands.append(f"SNAP{curr.screenshot_id}_R")
+                elif ob['y'] == rob.y: commands.append(f"SNAP{curr.screenshot_id}_C")
+                else: commands.append(f"SNAP{curr.screenshot_id}_L")
+
+            elif ob['d'] == Direction.NORTH and rob.direction == Direction.SOUTH:
+                if ob['x'] > rob.x: commands.append(f"SNAP{curr.screenshot_id}_L")
+                elif ob['x'] == rob.x: commands.append(f"SNAP{curr.screenshot_id}_C")
+                else: commands.append(f"SNAP{curr.screenshot_id}_R")
+
+            elif ob['d'] == Direction.SOUTH and rob.direction == Direction.NORTH:
+                if ob['x'] > rob.x: commands.append(f"SNAP{curr.screenshot_id}_R")
+                elif ob['x'] == rob.x: commands.append(f"SNAP{curr.screenshot_id}_C")
+                else: commands.append(f"SNAP{curr.screenshot_id}_L")
+
+    # Final stop
     commands.append("FIN")
 
     # === Compress FW/BW ===
     compressed = [commands[0]]
     for i in range(1, len(commands)):
-        if commands[i].startswith("BW") and compressed[-1].startswith("BW"):
+        if commands[i].startswith("FW") and compressed[-1].startswith("FW"):
             steps = int(compressed[-1][2:])
             if steps != 90:
-                compressed[-1] = "BW{}".format(steps + 10)
+                compressed[-1] = f"FW{steps + 10}"
                 continue
-        elif commands[i].startswith("FW") and compressed[-1].startswith("FW"):
+        elif commands[i].startswith("BW") and compressed[-1].startswith("BW"):
             steps = int(compressed[-1][2:])
             if steps != 90:
-                compressed[-1] = "FW{}".format(steps + 10)
+                compressed[-1] = f"BW{steps + 10}"
                 continue
         compressed.append(commands[i])
 
     from helper import time_generator
     time = time_generator(compressed)
     return compressed, time
+
+
 
 
 # def time_generator(compressed_commands: list):

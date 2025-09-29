@@ -361,80 +361,74 @@ class MazeSolver:
                     safe_cost = self.get_safe_cost(x - dx, y - dy)
                     neighbors.append((x - dx, y - dy, md, safe_cost))
 
-        # --- Turns ---
-        for new_dir in Direction:
-            if new_dir in [Direction.SKIP]:
-                continue
-
-            diff = (int(new_dir) - int(direction)) % 8
-            if diff == 0:
-                continue
-
-            # === 45° turns (simple step) ===
-            if diff == 1 or diff == 7:
-                dx, dy, _ = next(m for m in MOVE_DIRECTION if m[2] == new_dir)
+        # --- 45° Diagonals ---
+        for dx, dy, md in MOVE_DIRECTION:
+            diff = (int(md) - int(direction)) % 8
+            if diff in [1, 7]:  # ±45°
                 if self.grid.reachable(x + dx, y + dy, turn=True) and self.grid.reachable(x, y, preTurn=True):
                     safe_cost = self.get_safe_cost(x + dx, y + dy)
-                    neighbors.append((x + dx, y + dy, new_dir, safe_cost + 10))
+                    # add small penalty so A* doesn’t overuse diagonals
+                    neighbors.append((x + dx, y + dy, md, safe_cost))
 
-            # === 90° turns (FR/FL/BR/BL using 3–1 or 4–2 radius) ===
-            elif diff == 2 or diff == 6:
-                big, small = turn_wrt_big_turns[self.big_turn]
-                cand_forward = None
-                cand_backward = None
+        # --- 90° Arcs (old working reference logic) ---
+        bigger_change = turn_wrt_big_turns[self.big_turn][0]
+        smaller_change = turn_wrt_big_turns[self.big_turn][1]
 
-                # Forward arcs
-                if diff == 2:  # FR90
-                    if direction == Direction.NORTH and new_dir == Direction.EAST:
-                        cand_forward = (x + big, y + small)
-                    elif direction == Direction.EAST and new_dir == Direction.SOUTH:
-                        cand_forward = (x + small, y - big)
-                    elif direction == Direction.SOUTH and new_dir == Direction.WEST:
-                        cand_forward = (x - big, y - small)
-                    elif direction == Direction.WEST and new_dir == Direction.NORTH:
-                        cand_forward = (x - small, y + big)
-                elif diff == 6:  # FL90
-                    if direction == Direction.NORTH and new_dir == Direction.WEST:
-                        cand_forward = (x - big, y + small)
-                    elif direction == Direction.WEST and new_dir == Direction.SOUTH:
-                        cand_forward = (x - small, y - big)
-                    elif direction == Direction.SOUTH and new_dir == Direction.EAST:
-                        cand_forward = (x + big, y - small)
-                    elif direction == Direction.EAST and new_dir == Direction.NORTH:
-                        cand_forward = (x + small, y + big)
+        # north <-> east
+        if direction == Direction.NORTH:
+            if self.grid.reachable(x + bigger_change, y + smaller_change, turn=True) and self.grid.reachable(x, y, preTurn=True):
+                safe_cost = self.get_safe_cost(x + bigger_change, y + smaller_change)
+                neighbors.append((x + bigger_change, y + smaller_change, Direction.EAST, safe_cost + 10))
+            if self.grid.reachable(x - smaller_change, y - bigger_change, turn=True) and self.grid.reachable(x, y, preTurn=True):
+                safe_cost = self.get_safe_cost(x - smaller_change, y - bigger_change)
+                neighbors.append((x - smaller_change, y - bigger_change, Direction.EAST, safe_cost + 10))
 
-                # Backward arcs (opposite)
-                if direction == Direction.NORTH and new_dir == Direction.WEST:   # BR90
-                    cand_backward = (x - big, y - small)
-                elif direction == Direction.NORTH and new_dir == Direction.EAST: # BL90
-                    cand_backward = (x + big, y - small)
-                elif direction == Direction.EAST and new_dir == Direction.NORTH: # BR90
-                    cand_backward = (x - big, y + small)
-                elif direction == Direction.EAST and new_dir == Direction.SOUTH: # BL90
-                    cand_backward = (x - big, y - small)
-                elif direction == Direction.SOUTH and new_dir == Direction.EAST: # BR90
-                    cand_backward = (x + big, y + small)
-                elif direction == Direction.SOUTH and new_dir == Direction.WEST: # BL90
-                    cand_backward = (x - big, y + small)
-                elif direction == Direction.WEST and new_dir == Direction.SOUTH: # BR90
-                    cand_backward = (x + big, y - small)
-                elif direction == Direction.WEST and new_dir == Direction.NORTH: # BL90
-                    cand_backward = (x + big, y + small)
+        elif direction == Direction.EAST:
+            if self.grid.reachable(x + smaller_change, y + bigger_change, turn=True) and self.grid.reachable(x, y, preTurn=True):
+                safe_cost = self.get_safe_cost(x + smaller_change, y + bigger_change)
+                neighbors.append((x + smaller_change, y + bigger_change, Direction.NORTH, safe_cost + 10))
+            if self.grid.reachable(x - bigger_change, y - smaller_change, turn=True) and self.grid.reachable(x, y, preTurn=True):
+                safe_cost = self.get_safe_cost(x - bigger_change, y - smaller_change)
+                neighbors.append((x - bigger_change, y - smaller_change, Direction.NORTH, safe_cost + 10))
 
-                # Save forward
-                if cand_forward and self.grid.reachable(cand_forward[0], cand_forward[1], turn=True) and self.grid.reachable(x, y, preTurn=True):
-                    safe_cost = self.get_safe_cost(cand_forward[0], cand_forward[1])
-                    neighbors.append((cand_forward[0], cand_forward[1], new_dir, safe_cost + 10))
+            if self.grid.reachable(x + smaller_change, y - bigger_change, turn=True) and self.grid.reachable(x, y, preTurn=True):
+                safe_cost = self.get_safe_cost(x + smaller_change, y - bigger_change)
+                neighbors.append((x + smaller_change, y - bigger_change, Direction.SOUTH, safe_cost + 10))
+            if self.grid.reachable(x - bigger_change, y + smaller_change, turn=True) and self.grid.reachable(x, y, preTurn=True):
+                safe_cost = self.get_safe_cost(x - bigger_change, y + smaller_change)
+                neighbors.append((x - bigger_change, y + smaller_change, Direction.SOUTH, safe_cost + 10))
 
-                # Save backward
-                if cand_backward and self.grid.reachable(cand_backward[0], cand_backward[1], turn=True) and self.grid.reachable(x, y, preTurn=True):
-                    safe_cost = self.get_safe_cost(cand_backward[0], cand_backward[1])
-                    neighbors.append((cand_backward[0], cand_backward[1], new_dir, safe_cost + 10))
+        elif direction == Direction.SOUTH:
+            if self.grid.reachable(x + bigger_change, y - smaller_change, turn=True) and self.grid.reachable(x, y, preTurn=True):
+                safe_cost = self.get_safe_cost(x + bigger_change, y - smaller_change)
+                neighbors.append((x + bigger_change, y - smaller_change, Direction.EAST, safe_cost + 10))
+            if self.grid.reachable(x - smaller_change, y + bigger_change, turn=True) and self.grid.reachable(x, y, preTurn=True):
+                safe_cost = self.get_safe_cost(x - smaller_change, y + bigger_change)
+                neighbors.append((x - smaller_change, y + bigger_change, Direction.EAST, safe_cost + 10))
+
+            if self.grid.reachable(x - bigger_change, y - smaller_change, turn=True) and self.grid.reachable(x, y, preTurn=True):
+                safe_cost = self.get_safe_cost(x - bigger_change, y - smaller_change)
+                neighbors.append((x - bigger_change, y - smaller_change, Direction.WEST, safe_cost + 10))
+            if self.grid.reachable(x + smaller_change, y + bigger_change, turn=True) and self.grid.reachable(x, y, preTurn=True):
+                safe_cost = self.get_safe_cost(x + smaller_change, y + bigger_change)
+                neighbors.append((x + smaller_change, y + bigger_change, Direction.WEST, safe_cost + 10))
+
+        elif direction == Direction.WEST:
+            if self.grid.reachable(x - smaller_change, y - bigger_change, turn=True) and self.grid.reachable(x, y, preTurn=True):
+                safe_cost = self.get_safe_cost(x - smaller_change, y - bigger_change)
+                neighbors.append((x - smaller_change, y - bigger_change, Direction.SOUTH, safe_cost + 10))
+            if self.grid.reachable(x + bigger_change, y + smaller_change, turn=True) and self.grid.reachable(x, y, preTurn=True):
+                safe_cost = self.get_safe_cost(x + bigger_change, y + smaller_change)
+                neighbors.append((x + bigger_change, y + smaller_change, Direction.SOUTH, safe_cost + 10))
+
+            if self.grid.reachable(x - smaller_change, y + bigger_change, turn=True) and self.grid.reachable(x, y, preTurn=True):
+                safe_cost = self.get_safe_cost(x - smaller_change, y + bigger_change)
+                neighbors.append((x - smaller_change, y + bigger_change, Direction.NORTH, safe_cost + 10))
+            if self.grid.reachable(x + bigger_change, y - smaller_change, turn=True) and self.grid.reachable(x, y, preTurn=True):
+                safe_cost = self.get_safe_cost(x + bigger_change, y - smaller_change)
+                neighbors.append((x + bigger_change, y - smaller_change, Direction.NORTH, safe_cost + 10))
 
         return neighbors
-
-
-
 
     def path_cost_generator(self, states: List[CellState]):
         """Generate the path cost between the input states and update the tables accordingly
