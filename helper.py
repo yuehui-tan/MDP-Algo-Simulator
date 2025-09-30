@@ -314,12 +314,12 @@ def command_generator(states, obstacles):
             if dx >= 0 or dy >= 0:
                 commands.append("FR45")
             else:
-                commands.append("BR45")
+                commands.append("BL45")
         elif diff == 7:  # -45° counter-clockwise
             if dx <= 0 or dy >= 0:
                 commands.append("FL45")
             else:
-                commands.append("BL45")
+                commands.append("BR45")
 
         # === Case 3: 90° Arcs ===
         elif diff == 2:  # clockwise (FR90 or BL90)
