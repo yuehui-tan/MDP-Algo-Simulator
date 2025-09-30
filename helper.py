@@ -311,24 +311,32 @@ def command_generator(states, obstacles):
         # === Case 2: 45° Diagonal Turns ===
         elif diff == 1:   # +45° clockwise
             # forward if movement is in same general quadrant
-            if dx >= 0 or dy >= 0:
+            expected_dx, expected_dy, _ = MOVE_DIRECTION[int(curr.direction)]
+            new_dx,new_dy = expected_dx * dx, expected_dy * dy
+            if new_dx > 0 or new_dy > 0:
                 commands.append("FR45")
             else:
                 commands.append("BL45")
         elif diff == 7:  # -45° counter-clockwise
-            if dx <= 0 or dy >= 0:
+            expected_dx, expected_dy, _ = MOVE_DIRECTION[int(curr.direction)]
+            new_dx,new_dy = expected_dx * dx, expected_dy * dy
+            if new_dx > 0 or new_dy > 0:
                 commands.append("FL45")
             else:
                 commands.append("BR45")
 
         # === Case 3: 90° Arcs ===
         elif diff == 2:  # clockwise (FR90 or BL90)
-            if dx > 0 or dy > 0:
+            expected_dx, expected_dy, _ = MOVE_DIRECTION[int(curr.direction)]
+            new_dx,new_dy = expected_dx * dx, expected_dy * dy
+            if new_dx > 0 or new_dy > 0:
                 commands.append("FR90")
             else:
                 commands.append("BL90")
         elif diff == 6:  # counter-clockwise (FL90 or BR90)
-            if dx < 0 or dy > 0:
+            expected_dx, expected_dy, _ = MOVE_DIRECTION[int(curr.direction)]
+            new_dx,new_dy = expected_dx * dx, expected_dy * dy
+            if new_dx > 0 or new_dy > 0:
                 commands.append("FL90")
             else:
                 commands.append("BR90")
