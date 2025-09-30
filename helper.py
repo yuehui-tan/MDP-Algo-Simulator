@@ -1,4 +1,4 @@
-from consts import WIDTH, HEIGHT, Direction
+from consts import WIDTH, HEIGHT, Direction, MOVE_DIRECTION
 
 
 def is_valid(center_x: int, center_y: int):
@@ -284,16 +284,30 @@ def command_generator(states, obstacles):
         new_dir = int(curr.direction)
         diff = (new_dir - old_dir) % 8
 
+        # # === Case 1: Straight ===
+        # if curr.direction == prev.direction:
+        #     if (dx > 0 and curr.direction in [Direction.EAST]) \
+        #        or (dx < 0 and curr.direction in [Direction.WEST]) \
+        #        or (dy > 0 and curr.direction in [Direction.NORTH]) \
+        #        or (dy < 0 and curr.direction in [Direction.SOUTH]):
+        #         commands.append("FW10")
+        #     else:
+        #         commands.append("BW10")
+
         # === Case 1: Straight ===
         if curr.direction == prev.direction:
-            if (dx > 0 and curr.direction in [Direction.EAST]) \
-               or (dx < 0 and curr.direction in [Direction.WEST]) \
-               or (dy > 0 and curr.direction in [Direction.NORTH]) \
-               or (dy < 0 and curr.direction in [Direction.SOUTH]):
-                commands.append("FW10")
-            else:
-                commands.append("BW10")
+            # Get the canonical (dx, dy) for this direction
+            expected_dx, expected_dy, _ = MOVE_DIRECTION[int(curr.direction)]
 
+            if (dx, dy) == (expected_dx, expected_dy):
+                commands.append("FW10")
+            elif (dx, dy) == (-expected_dx, -expected_dy):
+                commands.append("BW10")
+            else:
+                raise Exception(
+                    f"Unexpected straight movement: dir={curr.direction}, "
+                    f"expected ({expected_dx},{expected_dy}) or opposite, got ({dx},{dy})"
+                )
         # === Case 2: 45° Diagonal Turns ===
         elif diff == 1:   # +45° clockwise
             # forward if movement is in same general quadrant

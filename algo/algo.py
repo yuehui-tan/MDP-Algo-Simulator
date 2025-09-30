@@ -368,7 +368,7 @@ class MazeSolver:
                 if self.grid.reachable(x + dx, y + dy, turn=True) and self.grid.reachable(x, y, preTurn=True):
                     safe_cost = self.get_safe_cost(x + dx, y + dy)
                     # add small penalty so A* doesn’t overuse diagonals
-                    neighbors.append((x + dx, y + dy, md, safe_cost))
+                    neighbors.append((x + dx, y + dy, md, safe_cost + 5))
 
         # --- 90° Arcs (old working reference logic) ---
         bigger_change = turn_wrt_big_turns[self.big_turn][0]
