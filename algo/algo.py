@@ -19,7 +19,8 @@ class MazeSolver:
             robot_x: int,
             robot_y: int,
             robot_direction: Direction,
-            big_turn=None # the big_turn here is to allow 3-1 turn(0 - by default) | 4-2 turn(1)
+            big_turn=None, # the big_turn here is to allow 3-1 turn(0 - by default) | 4-2 turn(1)
+            allow_45 = True
     ):
         # Initialize a Grid object for the arena representation
         self.grid = Grid(size_x, size_y)
@@ -32,6 +33,7 @@ class MazeSolver:
             self.big_turn = 0
         else:
             self.big_turn = int(big_turn)
+        self.allow_45 = allow_45
 
     def add_obstacle(self, x: int, y: int, direction: Direction, obstacle_id: int):
         """Add obstacle to MazeSolver object
@@ -362,15 +364,16 @@ class MazeSolver:
                     neighbors.append((x - dx, y - dy, md, safe_cost))
 
         # --- 45° Diagonals ---
-        for dx, dy, md in MOVE_DIRECTION:
-            diff = (int(md) - int(direction)) % 8
-            if diff in [1, 7]:  # ±45°
-                if self.grid.reachable(x + dx, y + dy, turn=True) and self.grid.reachable(x, y, preTurn=True):
-                    safe_cost = self.get_safe_cost(x + dx, y + dy)
-                    # add small penalty so A* doesn’t overuse diagonals
-                    neighbors.append((x + dx, y + dy, md, safe_cost + 5))
+        if self.allow_45:
+            for dx, dy, md in MOVE_DIRECTION:
+                diff = (int(md) - int(direction)) % 8
+                if diff in [1, 7]:  # ±45°
+                    if self.grid.reachable(x + dx, y + dy, turn=True) and self.grid.reachable(x, y, preTurn=True):
+                        safe_cost = self.get_safe_cost(x + dx, y + dy)
+                        # add small penalty so A* doesn’t overuse diagonals
+                        neighbors.append((x + dx, y + dy, md, safe_cost + 5))
 
-        # --- 90° Arcs (old working reference logic) ---
+        # --- 90° Arcs ---
         bigger_change = turn_wrt_big_turns[self.big_turn][0]
         smaller_change = turn_wrt_big_turns[self.big_turn][1]
 
