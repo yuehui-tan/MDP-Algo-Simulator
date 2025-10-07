@@ -365,7 +365,7 @@ class Grid:
                     #     print(f"ob.x: {ob.x} ob.y: {ob.y} x: {x} y:{y} Triggered less than 3 max units trap")
                     return False
             else:
-                if max(abs(ob.x - x), abs(ob.y - y)) < 4:
+                if max(abs(ob.x - x), abs(ob.y - y)) < 3:
                     # print(f"ob.x: {ob.x} ob.y: {ob.y} x: {x} y:{y} Triggered less than 3 max units trap")
                     return False
 
