@@ -39,10 +39,6 @@ const transformCoord = (x, y) => {
   return { x: 19 - y, y: x };
 };
 
-function classNames(...classes) {
-  return classes.filter(Boolean).join(" ");
-}
-
 
 
 export default function Simulator() {
