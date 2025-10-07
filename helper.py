@@ -381,12 +381,12 @@ def command_generator(states, obstacles):
     for i in range(1, len(commands)):
         if commands[i].startswith("FW") and compressed[-1].startswith("FW"):
             steps = int(compressed[-1][2:])
-            if steps != 90:
+            if steps != 180:
                 compressed[-1] = f"FW{steps + 10}"
                 continue
         elif commands[i].startswith("BW") and compressed[-1].startswith("BW"):
             steps = int(compressed[-1][2:])
-            if steps != 90:
+            if steps != 180:
                 compressed[-1] = f"BW{steps + 10}"
                 continue
         compressed.append(commands[i])
