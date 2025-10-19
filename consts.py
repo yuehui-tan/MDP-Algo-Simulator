@@ -16,11 +16,12 @@ class Direction(int, Enum):
         return self.value
 
     @staticmethod
-    def rotation_cost(d1, d2):
-        diff = abs(d1 - d2)
-        return min(diff, 8 - diff)
+    def rotation_cost(direction1, direction2):
+        difference = abs(direction1 - direction2)
+        return min(difference, 8 - difference)
 
-MOVE_DIRECTION = [
+
+MOVE_DIRECTIONS = [
     (0, 1, Direction.NORTH),
     (1, 1, Direction.NORTHEAST),
     (1, 0, Direction.EAST),
@@ -32,14 +33,13 @@ MOVE_DIRECTION = [
 ]
 
 TURN_FACTOR = 1
+EXPANDED_CELL = 1
 
-EXPANDED_CELL = 1 # for both agent and obstacles
+GRID_WIDTH = 20
+GRID_HEIGHT = 20
 
-WIDTH = 20
-HEIGHT = 20
-
-ITERATIONS = 2000
+MAX_ITERATIONS = 2000
 TURN_RADIUS = 1
 
-SAFE_COST = 1000 # the cost for the turn in case there is a chance that the robot is touch some obstacle
-SCREENSHOT_COST = 50 # the cost for the place where the picture is taken
+SAFE_TURN_COST = 1000
+SNAPSHOT_COST = 50
