@@ -31,7 +31,7 @@ def find_path():
         solver.add_obstacle(obstacle['x'], obstacle['y'], obstacle['d'], obstacle['id'])
 
     start_time = time.time()
-    best_path, total_distance = solver.get_optimal_order_dp(retrying=retry_flag)
+    best_path, total_distance = solver.get_optimal_order_dp(retry_flag=retry_flag)
     print(f"Time taken: {time.time() - start_time:.3f}s")
     print(f"Total distance: {total_distance} units")
 

@@ -1,6 +1,6 @@
 from typing import List
 from consts import Direction, EXPANDED_CELL, SNAPSHOT_COST
-from helper import is_valid
+from helper import within_bounds
 
 
 class CellState:
@@ -89,45 +89,45 @@ class Obstacle(CellState):
         if self.direction == Direction.NORTH:
             if retrying == False:
                 # Or (x, y + 3)
-                if is_valid(self.x, self.y + 1 + EXPANDED_CELL * 2):
+                if within_bounds(self.x, self.y + 1 + EXPANDED_CELL * 2):
                     cells.append(CellState(
                         self.x, self.y + 1 + EXPANDED_CELL * 2, Direction.SOUTH, self.obstacle_id, 5))
                 # Or (x, y + 4)
-                if is_valid(self.x, self.y + 2 + EXPANDED_CELL * 2):
+                if within_bounds(self.x, self.y + 2 + EXPANDED_CELL * 2):
                     cells.append(CellState(
                         self.x, self.y + 2 + EXPANDED_CELL * 2, Direction.SOUTH, self.obstacle_id, 0))
 
                 # Or (x + 1, y + 3)
-                # if is_valid(self.x + 1, self.y + 1 + EXPANDED_CELL * 2):
+                # if within_bounds(self.x + 1, self.y + 1 + EXPANDED_CELL * 2):
                 #     cells.append(CellState(self.x + 1, self.y + 1 + EXPANDED_CELL * 2, Direction.SOUTH, self.obstacle_id, SNAPSHOT_COST*10))
                 # # Or (x - 1, y + 3)
-                # if is_valid(self.x - 1, self.y + 1 + EXPANDED_CELL * 2):
+                # if within_bounds(self.x - 1, self.y + 1 + EXPANDED_CELL * 2):
                 #     cells.append(CellState(self.x - 1, self.y + 1 + EXPANDED_CELL * 2, Direction.SOUTH, self.obstacle_id, SNAPSHOT_COST*10))
 
                 # Or (x + 1, y + 4)
-                if is_valid(self.x + 1, self.y + 2 + EXPANDED_CELL * 2):
+                if within_bounds(self.x + 1, self.y + 2 + EXPANDED_CELL * 2):
                     cells.append(CellState(self.x + 1, self.y + 2 + EXPANDED_CELL *
                                  2, Direction.SOUTH, self.obstacle_id, SNAPSHOT_COST))
                 # Or (x - 1, y + 4)
-                if is_valid(self.x - 1, self.y + 2 + EXPANDED_CELL * 2):
+                if within_bounds(self.x - 1, self.y + 2 + EXPANDED_CELL * 2):
                     cells.append(CellState(self.x - 1, self.y + 2 + EXPANDED_CELL *
                                  2, Direction.SOUTH, self.obstacle_id, SNAPSHOT_COST))
 
             elif retrying == True:
                 # Or (x, y + 4)
-                if is_valid(self.x, self.y + 2 + EXPANDED_CELL * 2):
+                if within_bounds(self.x, self.y + 2 + EXPANDED_CELL * 2):
                     cells.append(CellState(
                         self.x, self.y + 2 + EXPANDED_CELL * 2, Direction.SOUTH, self.obstacle_id, 0))
                 # Or (x, y + 5)
-                if is_valid(self.x, self.y + 3 + EXPANDED_CELL * 2):
+                if within_bounds(self.x, self.y + 3 + EXPANDED_CELL * 2):
                     cells.append(CellState(
                         self.x, self.y + 3 + EXPANDED_CELL * 2, Direction.SOUTH, self.obstacle_id, 0))
                 # Or (x + 1, y + 4)
-                if is_valid(self.x + 1, self.y + 2 + EXPANDED_CELL * 2):
+                if within_bounds(self.x + 1, self.y + 2 + EXPANDED_CELL * 2):
                     cells.append(CellState(self.x + 1, self.y + 2 + EXPANDED_CELL *
                                  2, Direction.SOUTH, self.obstacle_id, SNAPSHOT_COST))
                 # Or (x - 1, y + 4)
-                if is_valid(self.x - 1, self.y + 2 + EXPANDED_CELL * 2):
+                if within_bounds(self.x - 1, self.y + 2 + EXPANDED_CELL * 2):
                     cells.append(CellState(self.x - 1, self.y + 2 + EXPANDED_CELL *
                                  2, Direction.SOUTH, self.obstacle_id, SNAPSHOT_COST))
 
@@ -136,45 +136,45 @@ class Obstacle(CellState):
 
             if retrying == False:
                 # Or (x, y - 3)
-                if is_valid(self.x, self.y - 1 - EXPANDED_CELL * 2):
+                if within_bounds(self.x, self.y - 1 - EXPANDED_CELL * 2):
                     cells.append(CellState(
                         self.x, self.y - 1 - EXPANDED_CELL * 2, Direction.NORTH, self.obstacle_id, 5))
                 # Or (x, y - 4)
-                if is_valid(self.x, self.y - 2 - EXPANDED_CELL * 2):
+                if within_bounds(self.x, self.y - 2 - EXPANDED_CELL * 2):
                     cells.append(CellState(
                         self.x, self.y - 2 - EXPANDED_CELL * 2, Direction.NORTH, self.obstacle_id, 0))
 
                 # Or (x + 1, y - 3)
-                # if is_valid(self.x + 1, self.y - 1 - EXPANDED_CELL * 2):
+                # if within_bounds(self.x + 1, self.y - 1 - EXPANDED_CELL * 2):
                 #     cells.append(CellState(self.x + 1, self.y - 1 - EXPANDED_CELL * 2, Direction.NORTH, self.obstacle_id, SNAPSHOT_COST*10))
                 # # Or (x - 1, y - 3)
-                # if is_valid(self.x - 1, self.y - 1 - EXPANDED_CELL * 2):
+                # if within_bounds(self.x - 1, self.y - 1 - EXPANDED_CELL * 2):
                 #     cells.append(CellState(self.x - 1, self.y - 1 - EXPANDED_CELL * 2, Direction.NORTH, self.obstacle_id, SNAPSHOT_COST*10))
 
                 # Or (x + 1, y - 4)
-                if is_valid(self.x + 1, self.y - 2 - EXPANDED_CELL * 2):
+                if within_bounds(self.x + 1, self.y - 2 - EXPANDED_CELL * 2):
                     cells.append(CellState(self.x + 1, self.y - 2 - EXPANDED_CELL *
                                  2, Direction.NORTH, self.obstacle_id, SNAPSHOT_COST))
                 # Or (x - 1, y - 4)
-                if is_valid(self.x - 1, self.y - 2 - EXPANDED_CELL * 2):
+                if within_bounds(self.x - 1, self.y - 2 - EXPANDED_CELL * 2):
                     cells.append(CellState(self.x - 1, self.y - 2 - EXPANDED_CELL *
                                  2, Direction.NORTH, self.obstacle_id, SNAPSHOT_COST))
 
             elif retrying == True:
                 # Or (x, y - 4)
-                if is_valid(self.x, self.y - 2 - EXPANDED_CELL * 2):
+                if within_bounds(self.x, self.y - 2 - EXPANDED_CELL * 2):
                     cells.append(CellState(
                         self.x, self.y - 2 - EXPANDED_CELL * 2, Direction.NORTH, self.obstacle_id, 0))
                 # Or (x, y - 5)
-                if is_valid(self.x, self.y - 3 - EXPANDED_CELL * 2):
+                if within_bounds(self.x, self.y - 3 - EXPANDED_CELL * 2):
                     cells.append(CellState(
                         self.x, self.y - 3 - EXPANDED_CELL * 2, Direction.NORTH, self.obstacle_id, 0))
                 # Or (x + 1, y - 4)
-                if is_valid(self.x + 1, self.y - 2 - EXPANDED_CELL * 2):
+                if within_bounds(self.x + 1, self.y - 2 - EXPANDED_CELL * 2):
                     cells.append(CellState(self.x + 1, self.y - 2 - EXPANDED_CELL *
                                  2, Direction.NORTH, self.obstacle_id, SNAPSHOT_COST))
                 # Or (x - 1, y - 4)
-                if is_valid(self.x - 1, self.y - 2 - EXPANDED_CELL * 2):
+                if within_bounds(self.x - 1, self.y - 2 - EXPANDED_CELL * 2):
                     cells.append(CellState(self.x - 1, self.y - 2 - EXPANDED_CELL *
                                  2, Direction.NORTH, self.obstacle_id, SNAPSHOT_COST))
 
@@ -183,98 +183,98 @@ class Obstacle(CellState):
 
             if retrying == False:
                 # Or (x + 3,y)
-                if is_valid(self.x + 1 + EXPANDED_CELL * 2, self.y):
+                if within_bounds(self.x + 1 + EXPANDED_CELL * 2, self.y):
                     cells.append(CellState(self.x + 1 + EXPANDED_CELL * 2,
                                  self.y, Direction.WEST, self.obstacle_id, 5))
                 # Or (x + 4,y)
-                if is_valid(self.x + 2 + EXPANDED_CELL * 2, self.y):
+                if within_bounds(self.x + 2 + EXPANDED_CELL * 2, self.y):
                     # print(f"Obstacle facing east, Adding {self.x + 2 + EXPANDED_CELL * 2}, {self.y}")
                     cells.append(CellState(self.x + 2 + EXPANDED_CELL * 2,
                                  self.y, Direction.WEST, self.obstacle_id, 0))
 
                 # Or (x + 3,y + 1)
-                # if is_valid(self.x + 1 + EXPANDED_CELL * 2, self.y + 1):
+                # if within_bounds(self.x + 1 + EXPANDED_CELL * 2, self.y + 1):
                 #     #print(f"Obstacle facing east, Adding {self.x + 2 + EXPANDED_CELL * 2}, {self.y + 1}")
                 #     cells.append(CellState(self.x + 1 + EXPANDED_CELL * 2, self.y + 1, Direction.WEST, self.obstacle_id, SNAPSHOT_COST*10))
                 # # Or (x + 3,y - 1)
-                # if is_valid(self.x + 1 + EXPANDED_CELL * 2, self.y - 1):
+                # if within_bounds(self.x + 1 + EXPANDED_CELL * 2, self.y - 1):
                 #     #print(f"Obstacle facing east, Adding {self.x + 2 + EXPANDED_CELL * 2}, {self.y - 1}")
                 #     cells.append(CellState(self.x + 1 + EXPANDED_CELL * 2, self.y - 1, Direction.WEST, self.obstacle_id, SNAPSHOT_COST*10))
 
                 # Or (x + 4, y + 1)
-                if is_valid(self.x + 2 + EXPANDED_CELL * 2, self.y + 1):
+                if within_bounds(self.x + 2 + EXPANDED_CELL * 2, self.y + 1):
                     cells.append(CellState(self.x + 2 + EXPANDED_CELL * 2, self.y +
                                  1, Direction.WEST, self.obstacle_id, SNAPSHOT_COST))
                 # Or (x + 4, y - 1)
-                if is_valid(self.x + 2 + EXPANDED_CELL * 2, self.y - 1):
+                if within_bounds(self.x + 2 + EXPANDED_CELL * 2, self.y - 1):
                     cells.append(CellState(self.x + 2 + EXPANDED_CELL * 2, self.y -
                                  1, Direction.WEST, self.obstacle_id, SNAPSHOT_COST))
 
             elif retrying == True:
                 # Or (x + 4, y)
-                if is_valid(self.x + 2 + EXPANDED_CELL * 2, self.y):
+                if within_bounds(self.x + 2 + EXPANDED_CELL * 2, self.y):
                     cells.append(CellState(self.x + 2 + EXPANDED_CELL * 2,
                                  self.y, Direction.WEST, self.obstacle_id, 0))
                 # Or (x + 5, y)
-                if is_valid(self.x + 3 + EXPANDED_CELL * 2, self.y):
+                if within_bounds(self.x + 3 + EXPANDED_CELL * 2, self.y):
                     cells.append(CellState(self.x + 3 + EXPANDED_CELL * 2,
                                  self.y, Direction.WEST, self.obstacle_id, 0))
                 # Or (x + 4,y + 1)
-                if is_valid(self.x + 2 + EXPANDED_CELL * 2, self.y + 1):
+                if within_bounds(self.x + 2 + EXPANDED_CELL * 2, self.y + 1):
                     cells.append(CellState(self.x + 2 + EXPANDED_CELL * 2, self.y +
                                  1, Direction.WEST, self.obstacle_id, SNAPSHOT_COST))
                 # Or (x + 4,y - 1)
-                if is_valid(self.x + 2 + EXPANDED_CELL * 2, self.y - 1):
+                if within_bounds(self.x + 2 + EXPANDED_CELL * 2, self.y - 1):
                     cells.append(CellState(self.x + 2 + EXPANDED_CELL * 2, self.y -
                                  1, Direction.WEST, self.obstacle_id, SNAPSHOT_COST))
 
         # If obstacle is facing west, then robot's cell state must be facing east
         elif self.direction == Direction.WEST:
             # It can be (x - 2,y)
-            # if is_valid(self.x - EXPANDED_CELL * 2, self.y):
+            # if within_bounds(self.x - EXPANDED_CELL * 2, self.y):
             #     cells.append(CellState(self.x - EXPANDED_CELL * 2, self.y, Direction.EAST, self.obstacle_id, 0))
 
             if retrying == False:
                 # Or (x - 3, y)
-                if is_valid(self.x - 1 - EXPANDED_CELL * 2, self.y):
+                if within_bounds(self.x - 1 - EXPANDED_CELL * 2, self.y):
                     cells.append(CellState(self.x - 1 - EXPANDED_CELL * 2,
                                  self.y, Direction.EAST, self.obstacle_id, 5))
                 # Or (x - 4, y)
-                if is_valid(self.x - 2 - EXPANDED_CELL * 2, self.y):
+                if within_bounds(self.x - 2 - EXPANDED_CELL * 2, self.y):
                     cells.append(CellState(self.x - 2 - EXPANDED_CELL * 2,
                                  self.y, Direction.EAST, self.obstacle_id, 0))
 
                 # Or (x - 3,y + 1)
-                # if is_valid(self.x - 1 - EXPANDED_CELL * 2, self.y + 1):
+                # if within_bounds(self.x - 1 - EXPANDED_CELL * 2, self.y + 1):
                 #     cells.append(CellState(self.x - 1 - EXPANDED_CELL * 2, self.y + 1, Direction.EAST, self.obstacle_id, SNAPSHOT_COST*10))
                 # # Or (x - 3,y - 1)
-                # if is_valid(self.x - 1 - EXPANDED_CELL * 2, self.y - 1):
+                # if within_bounds(self.x - 1 - EXPANDED_CELL * 2, self.y - 1):
                 #     cells.append(CellState(self.x - 1 - EXPANDED_CELL * 2, self.y - 1, Direction.EAST, self.obstacle_id, SNAPSHOT_COST*10))
 
                 # Or (x - 4, y + 1)
-                if is_valid(self.x - 2 - EXPANDED_CELL * 2, self.y + 1):
+                if within_bounds(self.x - 2 - EXPANDED_CELL * 2, self.y + 1):
                     cells.append(CellState(self.x - 2 - EXPANDED_CELL * 2, self.y +
                                  1, Direction.EAST, self.obstacle_id, SNAPSHOT_COST))
                 # Or (x - 4, y - 1)
-                if is_valid(self.x - 2 - EXPANDED_CELL * 2, self.y - 1):
+                if within_bounds(self.x - 2 - EXPANDED_CELL * 2, self.y - 1):
                     cells.append(CellState(self.x - 2 - EXPANDED_CELL * 2, self.y -
                                  1, Direction.EAST, self.obstacle_id, SNAPSHOT_COST))
 
             elif retrying == True:
                 # Or (x - 4, y)
-                if is_valid(self.x - 2 - EXPANDED_CELL * 2, self.y):
+                if within_bounds(self.x - 2 - EXPANDED_CELL * 2, self.y):
                     cells.append(CellState(self.x - 2 - EXPANDED_CELL * 2,
                                  self.y, Direction.EAST, self.obstacle_id, 0))
                 # Or (x - 5, y)
-                if is_valid(self.x - 3 - EXPANDED_CELL * 2, self.y):
+                if within_bounds(self.x - 3 - EXPANDED_CELL * 2, self.y):
                     cells.append(CellState(self.x - 3 - EXPANDED_CELL * 2,
                                  self.y, Direction.EAST, self.obstacle_id, 0))
                 # Or (x - 4, y + 1)
-                if is_valid(self.x - 2 - EXPANDED_CELL * 2, self.y + 1):
+                if within_bounds(self.x - 2 - EXPANDED_CELL * 2, self.y + 1):
                     cells.append(CellState(self.x - 2 - EXPANDED_CELL * 2, self.y +
                                  1, Direction.EAST, self.obstacle_id, SNAPSHOT_COST))
                 # Or (x - 4, y - 1)
-                if is_valid(self.x - 2 - EXPANDED_CELL * 2, self.y - 1):
+                if within_bounds(self.x - 2 - EXPANDED_CELL * 2, self.y - 1):
                     cells.append(CellState(self.x - 2 - EXPANDED_CELL * 2, self.y -
                                  1, Direction.EAST, self.obstacle_id, SNAPSHOT_COST))
 
@@ -336,7 +336,7 @@ class Grid:
             bool: _description_
         """
         
-        if not self.is_valid_coord(x, y):
+        if not self.within_bounds_coord(x, y):
             return False
 
         for ob in self.obstacles:
@@ -371,7 +371,7 @@ class Grid:
 
         return True
 
-    def is_valid_coord(self, x: int, y: int) -> bool:
+    def within_bounds_coord(self, x: int, y: int) -> bool:
         """Checks if given position is within bounds
 
         Args:
@@ -386,7 +386,7 @@ class Grid:
 
         return True
 
-    def is_valid_cell_state(self, state: CellState) -> bool:
+    def within_bounds_cell_state(self, state: CellState) -> bool:
         """Checks if given state is within bounds
 
         Args:
@@ -395,7 +395,7 @@ class Grid:
         Returns:
             bool: True if valid, False otherwise
         """
-        return self.is_valid_coord(state.x, state.y)
+        return self.within_bounds_coord(state.x, state.y)
 
     def get_view_obstacle_positions(self, retrying) -> List[List[CellState]]:
         """
